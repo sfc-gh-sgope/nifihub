@@ -3,64 +3,40 @@
 # Full SOM mode — the CD pipeline creates the runtime from scratch (no ClickOps)
 
 account:
-  name: som-cicd-test
-  github_environment: som-cicd-test
+  name: NIFIHUB_TEST
+  github_environment: NIFIHUB_TEST
 
 deployments:
-  - name: SOM_DEPLOYMENT
+  - name: SGOPE_OPENFLOW
     deployment_type: SNOWFLAKE
     runtimes:
       # Existing runtimes — preserve but don't manage
-      - name: CUSTOM_FLOW_RUNTIME
+      - name: POSTGRES_DEMO
         database: OPENFLOW
-        schema: PUBLIC
-        node_type: SMALL
+        schema: OPENFLOW
+        node_type: LARGE
         min_nodes: 1
         max_nodes: 1
         reconcile: false
-      - name: SOM_CICD_RUNTIME
+      - name: SQL_API_TEST
         database: OPENFLOW
-        schema: PUBLIC
-        node_type: SMALL
+        schema: OPENFLOW
+        node_type: LARGE
         min_nodes: 1
         max_nodes: 1
-        suspend: true
-        reconcile: false
-      - name: HOL_DEMO
-        database: OPENFLOW
-        schema: PUBLIC
-        node_type: SMALL
-        min_nodes: 1
-        max_nodes: 1
-        suspend: true
-        reconcile: false
-      - name: HOL_DEMO_GEN2
-        database: OPENFLOW
-        schema: PUBLIC
-        node_type: SMALL
-        min_nodes: 1
-        max_nodes: 1
-        suspend: true
-        reconcile: false
-      - name: SOM_RUNTIME
-        database: OPENFLOW
-        schema: PUBLIC
-        node_type: SMALL
-        min_nodes: 1
-        max_nodes: 1
-        suspend: true
+        suspend: false
         reconcile: false
 
       # NEW runtime — created by the CD pipeline (no ClickOps)
       - name: CD_CUSTOM_FLOW_RUNTIME
         database: OPENFLOW
-        schema: PUBLIC
+        schema: OPENFLOW
         node_type: SMALL
         min_nodes: 1
         max_nodes: 1
-        execute_as_role: OPENFLOW_RUNTIME_ROLE_PRASADRUNTIME
+        execute_as_role: OPENFLOW_ROLE_RW
         network_rules:
-          - name: POSTGRES_EGRESS
+          - name: NIFIHUB_EGRESS
             type: HOST_PORT
             mode: EGRESS
             values:
@@ -69,7 +45,7 @@ deployments:
           - name: nifihub
             type: org.apache.nifi.github.GitHubFlowRegistryClient
             properties:
-              Repository Owner: sfc-gh-prevalkar
+              Repository Owner: sfc-gh-sgope
               Repository Name: nifihub
               Authentication Type: PERSONAL_ACCESS_TOKEN
               Personal Access Token: ${{ secrets.NIFIHUB_REGISTRY_PAT }}
@@ -80,36 +56,5 @@ deployments:
             bucket: custom
             flow: snowflake-to-postgres
             version: latest
-            start: true
-
-      # PROD runtime — pinned to a specific commit SHA (promoted from DEV)
-      - name: CD_CUSTOM_FLOW_RUNTIME_PROD
-        database: OPENFLOW
-        schema: PUBLIC
-        node_type: SMALL
-        min_nodes: 1
-        max_nodes: 1
-        execute_as_role: OPENFLOW_RUNTIME_ROLE_PRASADRUNTIME
-        network_rules:
-          - name: POSTGRES_EGRESS_PROD
-            type: HOST_PORT
-            mode: EGRESS
-            values:
-              - "spxramy6onfkpahkmkwhf623dm.sfsenorthamerica-sfse-prevalkar.us-east-1.aws.postgres.snowflake.app:5432"
-        flow_registries:
-          - name: nifihub
-            type: org.apache.nifi.github.GitHubFlowRegistryClient
-            properties:
-              Repository Owner: sfc-gh-prevalkar
-              Repository Name: nifihub
-              Authentication Type: PERSONAL_ACCESS_TOKEN
-              Personal Access Token: ${{ secrets.NIFIHUB_REGISTRY_PAT }}
-              Default Branch: main
-              Repository Path: flows
-        flows:
-          - name: "Snowflake-to-Postgres"
-            bucket: custom
-            flow: snowflake-to-postgres
-            version: "7d8cd0f2164d8b650eacc19e52b47169a1ecfccd"
             start: true
 
